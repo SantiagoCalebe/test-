@@ -57,13 +57,18 @@ class TextToSpeech {
 
 class Translator {
     async translate(text, sourceLang, targetLang) {
-        const langPair = `${sourceLang}|${targetLang}`;
-        
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
-        const data = await res.json();
         
-        if (data.error) throw new Error(data.error);
-        return data.translatedText;
+        const res = await fetch(url);
+        const textResponse = await res.text();
+
+        try {
+            const data = JSON.parse(textResponse);
+            return data.responseData.translatedText;
+        } catch (e) {
+            console.error("Erro real da API:", textResponse);
+            throw new Error("Erro ao traduzir");
+        }
     }
 }
 
