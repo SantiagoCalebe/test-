@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Translator</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Roboto:wght@400;500&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-bar">
+            <div class="app-bar-content">
+                <div class="app-bar-title-group">
+                    <h1 class="app-bar-title">Voice Translator</h1>
+                    <p class="app-bar-subtitle">Speak and translate instantly</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="translator-card">
+                <div class="language-selectors">
+                    <div class="language-selector">
+                        <label for="source-lang">From</label>
+                        <select id="source-lang"></select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="target-lang">To</label>
+                        <select id="target-lang"></select>
+                    </div>
+                </div>
+
+                <div class="mic-button-container">
+                    <button id="mic-button" class="mic-button" aria-label="Start voice input">
+                        <span id="mic-icon" class="mic-icon material-icons">mic</span>
+                    </button>
+                </div>
+
+                <div class="text-areas">
+                    <div class="text-area-group">
+                        <label for="original-text">You said</label>
+                        <textarea id="original-text" class="text-area" data-placeholder="Tap the mic and speak..." readonly></textarea>
+                    </div>
+                    <div class="text-area-group">
+                        <label for="translated-text">Translation</label>
+                        <textarea id="translated-text" class="text-area" data-placeholder="Translation will appear here..." readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <div class="error-message"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/tts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
