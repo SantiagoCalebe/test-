@@ -59,7 +59,7 @@ class Translator {
     async translate(text, sourceLang, targetLang) {
         const langPair = `${sourceLang}|${targetLang}`;
         
-        const res = await fetch(`/api/translate?text=${encodeURIComponent(text)}&langpair=${langPair}`);
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
         const data = await res.json();
         
         if (data.error) throw new Error(data.error);
