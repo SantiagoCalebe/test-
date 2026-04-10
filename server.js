@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const URL = require('url');
 
 const PORT = 5000;
 
@@ -18,8 +19,83 @@ const mimeTypes = {
     '.ico': 'image/x-icon'
 };
 
+const TRANSLATION_API = 'https://api.mymemory.translated.net/get';
+const TTS_API = 'https://api.freetts.org/v1/synthesize';
+
 const server = http.createServer((req, res) => {
-    let filePath = req.url === '/' ? '/index.html' : req.url;
+    const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
+    const pathname = parsedUrl.pathname;
+    
+    if (pathname === '/api/translate') {
+        const text = parsedUrl.searchParams.get('text');
+        const langPair = parsedUrl.searchParams.get('langpair') || 'en|es';
+        
+        const url = `${TRANSLATION_API}?q=${encodeURIComponent(text)}&langpair=${langPair}`;
+        
+        https.get(url, (apiRes) => {
+            let data = '';
+            apiRes.on('data', chunk => data += chunk);
+            apiRes.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    res.writeHead(200, { 
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    });
+                    res.end(JSON.stringify(json.responseData));
+                } catch (e) {
+                    res.writeHead(500);
+                    res.end(JSON.stringify({ error: 'Translation failed' }));
+                }
+            });
+        }).on('error', () => {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: 'Network error' }));
+        });
+        return;
+    }
+    
+    if (pathname === '/api/tts') {
+        const text = parsedUrl.searchParams.get('text');
+        const voice = parsedUrl.searchParams.get('voice') || 'en-US-JennyNeural';
+        
+        const postData = `text=${encodeURIComponent(text)}&voice=${encodeURIComponent(voice)}`;
+        
+        const options = {
+            hostname: 'api.freetts.org',
+            path: '/v1/synthesize',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+        
+        const req = https.request(options, (apiRes) => {
+            if (apiRes.statusCode !== 200) {
+                res.writeHead(500);
+                res.end(JSON.stringify({ error: 'TTS failed' }));
+                return;
+            }
+            
+            res.writeHead(200, { 
+                'Content-Type': 'audio/mpeg',
+                'Access-Control-Allow-Origin': '*'
+            });
+            apiRes.pipe(res);
+        });
+        
+        req.on('error', () => {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: 'Network error' }));
+        });
+        
+        req.write(postData);
+        req.end();
+        return;
+    }
+    
+    let filePath = pathname === '/' ? '/index.html' : pathname;
     filePath = path.join(__dirname, filePath);
 
     const ext = path.extname(filePath);
