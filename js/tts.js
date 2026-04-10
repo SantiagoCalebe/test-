@@ -35,16 +35,11 @@ class TextToSpeech {
         const loadVoices = () => {
             const voices = speechSynthesis.getVoices();
             const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
-            if (voice) {
-                utterance.voice = voice;
-            }
+            if (voice) utterance.voice = voice;
         };
         
-        if (speechSynthesis.getVoices().length > 0) {
-            loadVoices();
-        } else {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        }
+        if (speechSynthesis.getVoices().length > 0) loadVoices();
+        else speechSynthesis.onvoiceschanged = loadVoices;
         
         return new Promise((resolve) => {
             utterance.onend = () => { this.isPlaying = false; resolve(); };
@@ -61,18 +56,14 @@ class TextToSpeech {
 }
 
 class Translator {
-    constructor() {
-        this.apiUrl = 'https://api.mymemory.translated.net/get';
-    }
-    
     async translate(text, sourceLang, targetLang) {
         const langPair = `${sourceLang}|${targetLang}`;
-        const url = `${this.apiUrl}?q=${encodeURIComponent(text)}&langpair=${langPair}`;
         
-        const response = await fetch(url);
-        const data = await response.json();
+        const res = await fetch(`/api/translate?text=${encodeURIComponent(text)}&langpair=${langPair}`);
+        const data = await res.json();
         
-        return data.responseData.translatedText;
+        if (data.error) throw new Error(data.error);
+        return data.translatedText;
     }
 }
 
