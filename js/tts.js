@@ -37,9 +37,65 @@ class TextToSpeech {
     constructor() {
         this.currentAudio = null;
         this.isPlaying = false;
+        this.useBrowserTTS = 'speechSynthesis' in window;
+        this.voiceMap = {
+            'en': 'en-US',
+            'es': 'es-ES',
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'it': 'it-IT',
+            'pt': 'pt-PT',
+            'zh': 'zh-CN',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'ru': 'ru-RU',
+            'ar': 'ar-SA',
+            'hi': 'hi-IN'
+        };
     }
     
     async speak(text, targetLang) {
+        this.stop();
+        
+        if (this.useBrowserTTS) {
+            return this.speakWithBrowser(text, targetLang);
+        }
+        
+        return this.speakWithAPI(text, targetLang);
+    }
+    
+    speakWithBrowser(text, targetLang) {
+        return new Promise((resolve, reject) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            const lang = this.voiceMap[targetLang] || 'en-US';
+            utterance.lang = lang;
+            
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            
+            const voices = speechSynthesis.getVoices();
+            const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
+            if (voice) {
+                utterance.voice = voice;
+            }
+            
+            utterance.onend = () => {
+                this.isPlaying = false;
+                resolve();
+            };
+            
+            utterance.onerror = () => {
+                this.isPlaying = false;
+                resolve();
+            };
+            
+            this.isPlaying = true;
+            speechSynthesis.speak(utterance);
+        });
+    }
+    
+    async speakWithAPI(text, targetLang) {
         this.stop();
         
         const voiceMap = {
@@ -101,6 +157,12 @@ class TextToSpeech {
     }
     
     stop() {
+        if (this.useBrowserTTS) {
+            speechSynthesis.cancel();
+            this.isPlaying = false;
+            return;
+        }
+        
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio = null;
